@@ -30,6 +30,9 @@ test:
 	go test -coverprofile=coverage.out
 	go tool cover -html=coverage.out
 
+benchmark:
+	go test -bench=. -benchmem
+
 update:
 	cp smoke_test.txt smoke_test.csv smoke_test.html smoke_test.pdf smoke_test_custom_template.html testdata/
 
