@@ -13,41 +13,6 @@ import (
 	"time"
 )
 
-// func getTable(row int) *Table {
-
-// 	const description = "Lorem ipsum dolor sit amet, elementum fermentum suspendisse"
-
-// 	var tbl Table
-// 	tbl.Init()
-// 	tbl.SetTitle("Sample Table")
-// 	tbl.SetSection1("Sample Table Section One")
-// 	tbl.SetSection2("Sample Table Section Two")
-
-// 	// add columns
-// 	tbl.AddColumn("Index", 35, CELLSTRING, COLJUSTIFYLEFT)
-// 	tbl.AddColumn("Value", 10, CELLINT, COLJUSTIFYRIGHT)
-// 	tbl.AddColumn("Description", 80, CELLINT, COLJUSTIFYRIGHT)
-
-// 	for i := 0; i < row; i++ {
-// 		tbl.AddRow()
-// 		tbl.Puti(-1, 0, int64(i))
-// 		tbl.Puti(-1, 1, int64(i*10))
-// 		tbl.Puts(-1, 2, description)
-// 	}
-
-// 	return &tbl
-// }
-
-// // from fib_test.go
-// func BenchmarkTable(b *testing.B) {
-// 	// run the table string output function b.N times
-// 	tbl := getTable(10)
-
-// 	for n := 0; n < b.N; n++ {
-// 		_ = tbl.String()
-// 	}
-// }
-
 func TestSmoke(t *testing.T) {
 	var tbl Table
 
