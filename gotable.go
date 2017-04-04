@@ -729,14 +729,14 @@ func (t *Table) HasValidColumn(colIndex int) error {
 // TableExportType each export output format must satisfy this interface
 type TableExportType interface {
 	writeTableOutput(w io.Writer) error
-	getTitle() string
-	getSection1() string
-	getSection2() string
-	getSection3() string
+	formatTitle() string
+	formatSection1() string
+	formatSection2() string
+	formatSection3() string
 	// getErrorSection() string
-	getHeaders() (string, error)
-	getRows() (string, error)
-	getRow(row int) (string, error)
+	formatHeaders() (string, error)
+	formatRows() (string, error)
+	formatRow(row int) (string, error)
 }
 
 // String is the "stringer" method implementation for gotable so that you can simply
@@ -773,7 +773,7 @@ func (t *Table) TextprintTable(w io.Writer) error {
 
 // CSVprintTable renders the entire table for csv output
 func (t *Table) CSVprintTable(w io.Writer) error {
-	var tout TableExportType = &CSVTable{Table: t, CellSep: ","}
+	var tout = &CSVTable{Table: t}
 	return tout.writeTableOutput(w)
 }
 

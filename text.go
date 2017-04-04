@@ -13,57 +13,53 @@ import (
 type TextTable struct {
 	*Table
 	TextColSpace int
-	outbuf       bytes.Buffer
+	buf          bytes.Buffer
 }
 
 func (tt *TextTable) writeTableOutput(w io.Writer) error {
-	var tout string
+
+	// vars
+	var (
+		err error
+	)
 
 	// append title
-	tout += tt.getTitle()
+	tt.buf.WriteString(tt.formatTitle())
 
 	// append section 1
-	tout += tt.getSection1()
+	tt.buf.WriteString(tt.formatSection1())
 
 	// append section 2
-	tout += tt.getSection2()
+	tt.buf.WriteString(tt.formatSection2())
 
 	// append section 3
-	tout += tt.getSection3()
+	tt.buf.WriteString(tt.formatSection3())
 
-	var tableOut string
 	// append headers
-	if headerStr, err := tt.getHeaders(); err != nil {
-		tableOut += stringln(err.Error())
+	if headerStr, err := tt.formatHeaders(); err != nil {
+		tt.buf.WriteString(stringln(err.Error()))
 	} else {
-
 		// append rows
-		if rowsStr, err := tt.getRows(); err != nil {
-			tableOut += stringln(err.Error())
+		if rowsStr, err := tt.formatRows(); err != nil {
+			tt.buf.WriteString(stringln(err.Error()))
 		} else {
 			// if rows exist, then only show headers
-			tableOut += headerStr
-			tableOut += rowsStr
+			tt.buf.WriteString(headerStr)
+			tt.buf.WriteString(rowsStr)
 		}
 	}
 
-	// // render error list
-	// tout += tt.getErrorSection()
+	// // render errorlist
+	// NOTE: if you enable this errorList feature then write them first on top,
+	// then write headers, rows output
+	// ct.buf.Write(ct.getErrorSection())
 
-	if tableOut != "" {
-		tout += tableOut
-	}
-
-	// return output
-	if _, err := tt.outbuf.WriteString(tout); err != nil {
-		return err
-	}
 	// write output to passed io.Writer interface object
-	_, err := w.Write(tt.outbuf.Bytes())
+	w.Write(tt.buf.Bytes())
 	return err
 }
 
-func (tt *TextTable) getTitle() string {
+func (tt *TextTable) formatTitle() string {
 	title := tt.Table.GetTitle()
 	if title != "" {
 		return stringln(title)
@@ -71,7 +67,7 @@ func (tt *TextTable) getTitle() string {
 	return title
 }
 
-func (tt *TextTable) getSection1() string {
+func (tt *TextTable) formatSection1() string {
 	section1 := tt.Table.GetSection1()
 	if section1 != "" {
 		return stringln(section1)
@@ -79,7 +75,7 @@ func (tt *TextTable) getSection1() string {
 	return section1
 }
 
-func (tt *TextTable) getSection2() string {
+func (tt *TextTable) formatSection2() string {
 	section2 := tt.Table.GetSection2()
 	if section2 != "" {
 		return stringln(section2)
@@ -87,7 +83,7 @@ func (tt *TextTable) getSection2() string {
 	return section2
 }
 
-func (tt *TextTable) getSection3() string {
+func (tt *TextTable) formatSection3() string {
 	section3 := tt.Table.GetSection3()
 	if section3 != "" {
 		return stringln(section3)
@@ -111,7 +107,7 @@ func (tt *TextTable) getSection3() string {
 // }
 
 // SprintColHdrsText formats the column headers as text and returns the string
-func (tt *TextTable) getHeaders() (string, error) {
+func (tt *TextTable) formatHeaders() (string, error) {
 
 	// check for blank headers
 	blankHdrsErr := tt.Table.HasHeaders()
@@ -121,7 +117,7 @@ func (tt *TextTable) getHeaders() (string, error) {
 
 	tt.Table.AdjustAllColumnHeaders()
 
-	s := ""
+	var s bytes.Buffer
 
 	for j := 0; j < len(tt.Table.ColDefs[0].Hdr); j++ {
 		for i := 0; i < len(tt.Table.ColDefs); i++ {
@@ -131,42 +127,48 @@ func (tt *TextTable) getHeaders() (string, error) {
 				lft += "-"
 			}
 			sf += fmt.Sprintf("%%%s%ds", lft, tt.Table.ColDefs[i].Width)
-			s += fmt.Sprintf(sf, tt.Table.ColDefs[i].Hdr[j])
-			s += mkstr(tt.TextColSpace, ' ')
+			s.WriteString(fmt.Sprintf(sf, tt.Table.ColDefs[i].Hdr[j]))
+			s.WriteString(mkstr(tt.TextColSpace, ' '))
 		}
+
 		// remove last textColSpace from s
-		s = s[0 : len(s)-tt.TextColSpace]
+		tmp := s.Bytes()
+		tmp = tmp[0 : len(tmp)-tt.TextColSpace]
+		s.Reset()
+		s.Write(tmp)
+
 		// append new line after first line of grid
-		s = stringln(s)
+		s.WriteByte('\n')
 	}
 
 	// finally append separator with line
-	s += tt.sprintLineText()
+	s.WriteString(tt.sprintLineText())
 
-	return s, nil
+	return s.String(), nil
 }
 
-func (tt *TextTable) getRows() (string, error) {
+func (tt *TextTable) formatRows() (string, error) {
+
 	// check for empty data table
 	blankDataErr := tt.Table.HasData()
 	if blankDataErr != nil {
 		return "", blankDataErr
 	}
 
-	var rowsStr string
+	var rowsOut bytes.Buffer
 	for i := 0; i < tt.Table.RowCount(); i++ {
 		// for valid row, we will never get an error
-		s, _ := tt.getRow(i)
-		rowsStr += s
+		s, _ := tt.formatRow(i)
+		rowsOut.WriteString(s)
 	}
 
-	return rowsStr, nil
+	return rowsOut.String(), nil
 }
 
-func (tt *TextTable) getRow(row int) (string, error) {
+func (tt *TextTable) formatRow(row int) (string, error) {
 
 	// This method is only called by internal instance of TextTable
-	// in getRows method, so we should avoid following error check
+	// in formatRows method, so we should avoid following error check
 	// unless we make it as export
 
 	// check that this passed row is valid or not
@@ -176,7 +178,7 @@ func (tt *TextTable) getRow(row int) (string, error) {
 	// }
 
 	// format table row
-	var s string
+	var s bytes.Buffer
 
 	if len(tt.Table.LineBefore) > 0 {
 		j := sort.SearchInts(tt.Table.LineBefore, row)
@@ -185,7 +187,7 @@ func (tt *TextTable) getRow(row int) (string, error) {
 		sepExist := sort.SearchInts(tt.Table.LineAfter, row-1) < tt.Table.RowCount()
 
 		if j < len(tt.Table.LineBefore) && row == tt.Table.LineBefore[j] && !sepExist {
-			s += tt.sprintLineText()
+			s.WriteString(tt.sprintLineText())
 		}
 	}
 
@@ -240,25 +242,31 @@ func (tt *TextTable) getRow(row int) (string, error) {
 	for gridColIndex := 0; gridColIndex < rowColumns; gridColIndex++ {
 		switch tt.Table.Row[row].Col[gridColIndex].Type {
 		case CELLFLOAT:
-			s += fmt.Sprintf(tt.Table.ColDefs[gridColIndex].Pfmt, humanize.FormatFloat("#,###.##", tt.Table.Row[row].Col[gridColIndex].Fval))
+			s.WriteString(fmt.Sprintf(tt.Table.ColDefs[gridColIndex].Pfmt, humanize.FormatFloat("#,###.##", tt.Table.Row[row].Col[gridColIndex].Fval)))
 		case CELLINT:
-			s += fmt.Sprintf(tt.Table.ColDefs[gridColIndex].Pfmt, tt.Table.Row[row].Col[gridColIndex].Ival)
+			s.WriteString(fmt.Sprintf(tt.Table.ColDefs[gridColIndex].Pfmt, tt.Table.Row[row].Col[gridColIndex].Ival))
 		case CELLSTRING:
-			s += fmt.Sprintf(tt.Table.ColDefs[gridColIndex].Pfmt, colMultiLineTextMap[gridColIndex][0])
+			s.WriteString(fmt.Sprintf(tt.Table.ColDefs[gridColIndex].Pfmt, colMultiLineTextMap[gridColIndex][0]))
 		case CELLDATE:
-			s += fmt.Sprintf("%*.*s", tt.Table.ColDefs[gridColIndex].Width, tt.Table.ColDefs[gridColIndex].Width, tt.Table.Row[row].Col[gridColIndex].Dval.Format(tt.Table.DateFmt))
+			s.WriteString(fmt.Sprintf("%*.*s", tt.Table.ColDefs[gridColIndex].Width, tt.Table.ColDefs[gridColIndex].Width, tt.Table.Row[row].Col[gridColIndex].Dval.Format(tt.Table.DateFmt)))
 		case CELLDATETIME:
-			s += fmt.Sprintf("%*.*s", tt.Table.ColDefs[gridColIndex].Width, tt.Table.ColDefs[gridColIndex].Width, tt.Table.Row[row].Col[gridColIndex].Dval.Format(tt.Table.DateTimeFmt))
+			s.WriteString(fmt.Sprintf("%*.*s", tt.Table.ColDefs[gridColIndex].Width, tt.Table.ColDefs[gridColIndex].Width, tt.Table.Row[row].Col[gridColIndex].Dval.Format(tt.Table.DateTimeFmt)))
 		default:
-			s += mkstr(tt.Table.ColDefs[gridColIndex].Width, ' ')
+			s.WriteString(mkstr(tt.Table.ColDefs[gridColIndex].Width, ' '))
 		}
+
 		// append text col whitespace
-		s += mkstr(tt.TextColSpace, ' ')
+		s.WriteString(mkstr(tt.TextColSpace, ' '))
 	}
+
 	// remove last textColSpace from s
-	s = s[0 : len(s)-tt.TextColSpace]
+	tmp := s.Bytes()
+	tmp = tmp[0 : len(tmp)-tt.TextColSpace]
+	s.Reset()
+	s.Write(tmp)
+
 	// append new line after first line of grid
-	s = stringln(s)
+	s.WriteByte('\n')
 
 	// now proceed with rest of the line in row grid
 	// for multi line text
@@ -274,25 +282,30 @@ func (tt *TextTable) getRow(row int) (string, error) {
 				}
 			}
 
-			s += rowGrid[gridRowIndex][gridColIndex]
+			// write string in the cell
+			s.WriteString(rowGrid[gridRowIndex][gridColIndex])
 
 			// append text col whitespace
-			s += mkstr(tt.TextColSpace, ' ')
+			s.WriteString(mkstr(tt.TextColSpace, ' '))
 		}
 
 		// remove last textColSpace from s
-		s = s[0 : len(s)-tt.TextColSpace]
+		tmp := s.Bytes()
+		tmp = tmp[0 : len(tmp)-tt.TextColSpace]
+		s.Reset()
+		s.Write(tmp)
+
 		// append new line
-		s = stringln(s)
+		s.WriteByte('\n')
 	}
 
 	if len(tt.Table.LineAfter) > 0 {
 		j := sort.SearchInts(tt.Table.LineAfter, row)
 		if j < len(tt.Table.LineAfter) && row == tt.Table.LineAfter[j] {
-			s += tt.sprintLineText()
+			s.WriteString(tt.sprintLineText())
 		}
 	}
-	return s, nil
+	return s.String(), nil
 }
 
 // SprintLineText returns a line across all rows in the table

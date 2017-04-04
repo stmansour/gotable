@@ -21,7 +21,7 @@ const (
 // PDFTable struct used to prepare table in pdf version
 type PDFTable struct {
 	*Table
-	outbuf bytes.Buffer
+	buf bytes.Buffer
 }
 
 func (pt *PDFTable) writeTableOutput(w io.Writer) error {
@@ -58,10 +58,7 @@ func (pt *PDFTable) writeTableOutput(w io.Writer) error {
 		return err
 	}
 	// write html string to file
-	_, err = tempHTMLFile.WriteString(htmlString)
-	if err != nil {
-		return err
-	}
+	tempHTMLFile.WriteString(htmlString)
 	tempHTMLFile.Close()
 
 	// remove this temp file after operation
@@ -73,7 +70,7 @@ func (pt *PDFTable) writeTableOutput(w io.Writer) error {
 	}
 
 	// write output to passed io.Writer interface object
-	_, err = w.Write(pt.outbuf.Bytes())
+	w.Write(pt.buf.Bytes())
 	return err
 }
 
@@ -141,7 +138,7 @@ func (pt *PDFTable) writePDFBuffer(inputFile string) error {
 	}
 
 	// write output to buffer
-	pt.outbuf.Write(b)
+	pt.buf.Write(b)
 
 	return nil
 }

@@ -1,11 +1,11 @@
-"GOTABLE"
-"A Smoke Test"
+GOTABLE
+A Smoke Test
 "February 21, 2017"
-"section3"
-"Name","Person Age","Height (cm)","Date of Birth","Country of Birth","Winnings","Notes","Random Date/Time"
-"Casandra Åberg",    66,   158,04/21/1950,"Sweden",   93,883.25,"2000 Seat Toledo",  01/28/2217 21:44:00 UTC
-"Lynette C. Allen",    56,   156,10/04/1960,"United States",   45,373.00,"A lot more notes. A whole, big, line with lots and lots and lots and lots of notes. And some more notes.",  01/23/2215 23:28:00 UTC
-"Mary M. Oneil",    47,   165,03/02/1969,"United States",   17,633.21,"A few notes here withaverylongnoteword",  09/11/2209 09:00:00 UTC
-"Stanislaus Aliyeva",    42,   172,04/10/1974,"Slovinia",  106,632.36,"A few notes here",  03/20/2020 08:36:00 UTC
-"Amanda Melo Ferreira",    55,   174,08/06/1977,"Brazil",   46,673.42,"2006 Ford Falcon",  07/12/2073 18:39:00 UTC
-                    ,      ,      ,          ,             ,  310,195.24,                     ,                         
+section3
+Name,Person Age,Height (cm),Date of Birth,Country of Birth,Winnings,Notes,Random Date/Time
+Casandra Åberg,"    66","   158",04/21/1950,Sweden,"   93,883.25",2000 Seat Toledo,"  01/28/2217 21:44:00 UTC"
+Lynette C. Allen,"    56","   156",10/04/1960,United States,"   45,373.00","A lot more notes. A whole, big, line with lots and lots and lots and lots of notes. And some more notes.","  01/23/2215 23:28:00 UTC"
+Mary M. Oneil,"    47","   165",03/02/1969,United States,"   17,633.21",A few notes here withaverylongnoteword,"  09/11/2209 09:00:00 UTC"
+Stanislaus Aliyeva,"    42","   172",04/10/1974,Slovinia,"  106,632.36",A few notes here,"  03/20/2020 08:36:00 UTC"
+Amanda Melo Ferreira,"    55","   174",08/06/1977,Brazil,"   46,673.42",2006 Ford Falcon,"  07/12/2073 18:39:00 UTC"
+"                    ","      ","      ","          ","             ","  310,195.24","                     ","                         "
