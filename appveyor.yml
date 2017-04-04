@@ -31,6 +31,7 @@ artifacts:
 
 test_script:
   - make test
+  - make benchmark
 
 on_success:
   - make clean
