@@ -34,8 +34,8 @@ const (
 // HTMLTable struct used to prepare table in html version
 type HTMLTable struct {
 	*Table
-	StyleString string
-	outbuf      bytes.Buffer
+	styleString bytes.Buffer
+	buf         bytes.Buffer
 	fontUnit    string
 }
 
@@ -51,7 +51,11 @@ func (ht *HTMLTable) SetCSSFontUnit(fontUnit string) {
 }
 
 func (ht *HTMLTable) writeTableOutput(w io.Writer) error {
-	var tContainer string
+
+	// vars
+	var (
+		err error
+	)
 
 	// if font unit not set then set default one
 	if ht.fontUnit == "" {
@@ -59,70 +63,75 @@ func (ht *HTMLTable) writeTableOutput(w io.Writer) error {
 	}
 
 	// append title
-	tContainer += ht.getTitle()
+	ht.buf.WriteString(ht.formatTitle())
 
 	// append section 1
-	tContainer += ht.getSection1()
+	ht.buf.WriteString(ht.formatSection1())
 
 	// append section 2
-	tContainer += ht.getSection2()
+	ht.buf.WriteString(ht.formatSection2())
 
 	// append section 3
-	tContainer += ht.getSection3()
-
-	// contains only table tag output
-	var tableOut string
+	ht.buf.WriteString(ht.formatSection3())
 
 	// append headers
-	if headerStr, err := ht.getHeaders(); err != nil {
+	var tableHdrsRows bytes.Buffer
+	if headerStr, err := ht.formatHeaders(); err != nil {
 		if cellCSSProps, ok := ht.getCSSPropertyList(NOHEADERSCLASS); ok {
 			// get css string for section1
-			ht.StyleString += `div.` + TABLECONTAINERCLASS + ` p`
-			ht.StyleString += ht.getCSSForClassSelector(NOHEADERSCLASS, cellCSSProps)
+			ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` p`)
+			ht.styleString.WriteString(ht.getCSSForClassSelector(NOHEADERSCLASS, cellCSSProps))
 		}
-		tableOut += `<p class="` + NOHEADERSCLASS + `">` + err.Error() + `</p>`
+		tableHdrsRows.WriteString(`<p class="` + NOHEADERSCLASS + `">` + err.Error() + `</p>`)
 	} else {
 		// if headers found then append rows
-		if rowsStr, err := ht.getRows(); err != nil {
+		if rowsStr, err := ht.formatRows(); err != nil {
 			colSpan := strconv.Itoa(ht.Table.ColCount())
 			if cellCSSProps, ok := ht.getCSSPropertyList(NOROWSCLASS); ok {
 				// get css string for section1
-				ht.StyleString += `div.` + TABLECONTAINERCLASS + ` table tbody tr td`
-				ht.StyleString += ht.getCSSForClassSelector(NOROWSCLASS, cellCSSProps)
+				ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` table tbody tr td`)
+				ht.styleString.WriteString(ht.getCSSForClassSelector(NOROWSCLASS, cellCSSProps))
 			}
 			noRowsTD := `<td colspan="` + colSpan + `" class="` + NOROWSCLASS + `">` + err.Error() + `</td>`
-			tableOut += `<tbody><tr>` + noRowsTD + `</tr></tbody>`
+			tableHdrsRows.WriteString(`<tbody><tr>` + noRowsTD + `</tr></tbody>`)
 		} else {
 			// if rows exist, then only show headers
-			tableOut += headerStr
-			tableOut += rowsStr
+			tableHdrsRows.WriteString(headerStr)
+			tableHdrsRows.WriteString(rowsStr)
 		}
 
 		// wrap headers and rows in a table
-		tableOut = `<table>` + tableOut + `</table>`
+		tmpTableHdrsRows := tableHdrsRows.String()
+		tableHdrsRows.Reset()
+		tableHdrsRows.WriteString(`<table>` + tmpTableHdrsRows + `</table>`)
 	}
 
-	// // render error list
-	// tContainer += ht.getErrorSection()
+	// // render errorlist
+	// NOTE: if you enable this errorList feature then write them first on top,
+	// then write headers, rows output
+	// ct.buf.Write(ct.getErrorSection())
 
-	// now append to container of table output
-	if tableOut != "" {
-		tContainer += tableOut
+	// if it has some content then write it in buf
+	if tableHdrsRows.Len() > 0 {
+		ht.buf.Write(tableHdrsRows.Bytes())
 	}
 
 	// wrap it up in a div with a class
-	tContainer = `<div class="` + TABLECONTAINERCLASS + `">` + tContainer + `</div>`
+	tmpHTML := ht.buf.String()
+	ht.buf.Reset()
+	ht.buf.WriteString(`<div class="` + TABLECONTAINERCLASS + `">` + tmpHTML + `</div>`)
 
-	if err := ht.formatHTML(tContainer); err != nil {
+	// format and store html output in ht buf
+	if err = ht.formatHTML(); err != nil {
 		return err
 	}
 
-	// write output to passed io.Writer interface object
-	_, err := w.Write(ht.outbuf.Bytes())
+	// after formatted output stored in ht.buf, write it to w
+	w.Write(ht.buf.Bytes())
 	return err
 }
 
-func (ht *HTMLTable) formatHTML(htmlString string) error {
+func (ht *HTMLTable) formatHTML() error {
 	var err error
 
 	// make context for template
@@ -134,8 +143,8 @@ func (ht *HTMLTable) formatHTML(htmlString string) error {
 		return err
 	}
 	htmlContext.DefaultCSS = `<style>` + htmlContext.DefaultCSS + `</style>`
-	htmlContext.CustomCSS = `<style>` + ht.StyleString + `</style>`
-	htmlContext.TableHTML = htmlString
+	htmlContext.CustomCSS = `<style>` + ht.styleString.String() + `</style>`
+	htmlContext.TableHTML = ht.buf.String()
 
 	// get template string
 	tmpl, err := ht.getHTMLTemplate()
@@ -144,27 +153,30 @@ func (ht *HTMLTable) formatHTML(htmlString string) error {
 	}
 
 	// write html output in buffer
-	err = tmpl.Execute(&ht.outbuf, htmlContext)
+	// before writing it to buf, reset it
+	ht.buf.Reset()
+	err = tmpl.Execute(&ht.buf, htmlContext)
 	if err != nil {
 		return err
 	}
 
 	// write buffered output after formatting html
-	htmlString = ht.outbuf.String()
-	ht.outbuf.Reset()
-	ht.outbuf.WriteString(gohtml.Format(htmlString))
+	tmpHTMLString := ht.buf.String()
+	ht.buf.Reset()
+	// beautify html output, it is nice to have, not necessarY
+	ht.buf.WriteString(gohtml.Format(tmpHTMLString))
 
 	return nil
 }
 
-func (ht *HTMLTable) getTitle() string {
+func (ht *HTMLTable) formatTitle() string {
 	title := ht.Table.GetTitle()
 
 	if title != "" {
 		if cellCSSProps, ok := ht.getCSSPropertyList(TITLECLASS); ok {
 			// get css string for title
-			ht.StyleString += `div.` + TABLECONTAINERCLASS + ` p`
-			ht.StyleString += ht.getCSSForClassSelector(TITLECLASS, cellCSSProps)
+			ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` p`)
+			ht.styleString.WriteString(ht.getCSSForClassSelector(TITLECLASS, cellCSSProps))
 		}
 		return `<p class="` + TITLECLASS + `">` + title + `</p>`
 	}
@@ -173,14 +185,14 @@ func (ht *HTMLTable) getTitle() string {
 	return title
 }
 
-func (ht *HTMLTable) getSection1() string {
+func (ht *HTMLTable) formatSection1() string {
 	section1 := ht.Table.GetSection1()
 
 	if section1 != "" {
 		if cellCSSProps, ok := ht.getCSSPropertyList(SECTION1CLASS); ok {
 			// get css string for section1
-			ht.StyleString += `div.` + TABLECONTAINERCLASS + ` p`
-			ht.StyleString += ht.getCSSForClassSelector(SECTION1CLASS, cellCSSProps)
+			ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` p`)
+			ht.styleString.WriteString(ht.getCSSForClassSelector(SECTION1CLASS, cellCSSProps))
 		}
 		return `<p class="` + SECTION1CLASS + `">` + section1 + `</p>`
 	}
@@ -189,14 +201,14 @@ func (ht *HTMLTable) getSection1() string {
 	return section1
 }
 
-func (ht *HTMLTable) getSection2() string {
+func (ht *HTMLTable) formatSection2() string {
 	section2 := ht.Table.GetSection2()
 
 	if section2 != "" {
 		if cellCSSProps, ok := ht.getCSSPropertyList(SECTION2CLASS); ok {
 			// get css string for section2
-			ht.StyleString += `div.` + TABLECONTAINERCLASS + ` p`
-			ht.StyleString += ht.getCSSForClassSelector(SECTION2CLASS, cellCSSProps)
+			ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` p`)
+			ht.styleString.WriteString(ht.getCSSForClassSelector(SECTION2CLASS, cellCSSProps))
 		}
 		return `<p class="` + SECTION2CLASS + `">` + section2 + `</p>`
 	}
@@ -205,14 +217,14 @@ func (ht *HTMLTable) getSection2() string {
 	return section2
 }
 
-func (ht *HTMLTable) getSection3() string {
+func (ht *HTMLTable) formatSection3() string {
 	section3 := ht.Table.GetSection3()
 
 	if section3 != "" {
 		if cellCSSProps, ok := ht.getCSSPropertyList(SECTION3CLASS); ok {
 			// get css string for section3
-			ht.StyleString += `div.` + TABLECONTAINERCLASS + ` p`
-			ht.StyleString += ht.getCSSForClassSelector(SECTION3CLASS, cellCSSProps)
+			ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` p`)
+			ht.styleString.WriteString(ht.getCSSForClassSelector(SECTION3CLASS, cellCSSProps))
 		}
 		return `<p class="` + SECTION3CLASS + `">` + section3 + `</p>`
 	}
@@ -237,7 +249,7 @@ func (ht *HTMLTable) getSection3() string {
 // 	return errSection
 // }
 
-func (ht *HTMLTable) getHeaders() (string, error) {
+func (ht *HTMLTable) formatHeaders() (string, error) {
 
 	// check for blank headers
 	blankHdrsErr := ht.Table.HasHeaders()
@@ -246,7 +258,7 @@ func (ht *HTMLTable) getHeaders() (string, error) {
 	}
 
 	// format headers
-	var tHeaders string
+	var tHeaders bytes.Buffer
 
 	for headerIndex := 0; headerIndex < len(ht.Table.ColDefs); headerIndex++ {
 
@@ -307,18 +319,20 @@ func (ht *HTMLTable) getHeaders() (string, error) {
 		cellCSSProps, _ := ht.getCSSPropertyList(thClass)
 
 		// get css string for headers
-		ht.StyleString += `div.` + TABLECONTAINERCLASS + ` table thead tr th`
-		// ht.StyleString += `div.` + TABLECONTAINERCLASS + ` table thead.` + HEADERSCLASS + ` tr th`
-		ht.StyleString += ht.getCSSForClassSelector(thClass, cellCSSProps)
+		ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` table thead tr th`)
 
-		tHeaders += `<th class="` + thClass + `">` + headerCell.ColTitle + `</th>`
+		// ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` table thead.` + HEADERSCLASS + ` tr th`)
+		ht.styleString.WriteString(ht.getCSSForClassSelector(thClass, cellCSSProps))
+
+		// append each header cells in tHeaders
+		tHeaders.WriteString(`<th class="` + thClass + `">` + headerCell.ColTitle + `</th>`)
 	}
 
-	return `<thead><tr>` + tHeaders + `</tr></thead>`, nil
-	// return `<thead class="` + HEADERSCLASS + `"><tr>` + tHeaders + `</tr></thead>`, nil
+	return `<thead><tr>` + tHeaders.String() + `</tr></thead>`, nil
+	// return `<thead class="` + HEADERSCLASS + `"><tr>` + tHeaders.WriteString() + `</tr></thead>`, nil
 }
 
-func (ht *HTMLTable) getRows() (string, error) {
+func (ht *HTMLTable) formatRows() (string, error) {
 
 	// check for empty data table
 	blankDataErr := ht.Table.HasData()
@@ -326,20 +340,21 @@ func (ht *HTMLTable) getRows() (string, error) {
 		return "", blankDataErr
 	}
 
-	var rowsStr string
+	var rowsOut bytes.Buffer
 	for i := 0; i < ht.Table.RowCount(); i++ {
 		// for valid row, we will never get an error
-		s, _ := ht.getRow(i)
-		rowsStr += s
+		s, _ := ht.formatRow(i)
+		rowsOut.WriteString(s)
 	}
 
-	return `<tbody>` + rowsStr + `</tbody>`, nil
+	// return with wrapping in tag tbody
+	return `<tbody>` + rowsOut.String() + `</tbody>`, nil
 }
 
-func (ht *HTMLTable) getRow(rowIndex int) (string, error) {
+func (ht *HTMLTable) formatRow(rowIndex int) (string, error) {
 
 	// This method is only called by internal instance of TextTable
-	// in getRows method, so we should avoid following error check
+	// in formatRows method, so we should avoid following error check
 	// unless we make it as export
 
 	// // check that this passed rowIndex is valid or not
@@ -349,7 +364,7 @@ func (ht *HTMLTable) getRow(rowIndex int) (string, error) {
 	// }
 
 	// format table rows
-	var tRow string
+	var tRow bytes.Buffer
 	var trClass string
 
 	if len(ht.Table.LineBefore) > 0 {
@@ -393,15 +408,13 @@ func (ht *HTMLTable) getRow(rowIndex int) (string, error) {
 			tdClass := `cell-row-` + strconv.Itoa(rowIndex) + `-col-` + strconv.Itoa(colIndex)
 
 			// get css string for a row
-			ht.StyleString += `div.` + TABLECONTAINERCLASS + ` table tbody tr td`
-			ht.StyleString += ht.getCSSForClassSelector(tdClass, cellCSSProps)
+			ht.styleString.WriteString(`div.` + TABLECONTAINERCLASS + ` table tbody tr td`)
+			ht.styleString.WriteString(ht.getCSSForClassSelector(tdClass, cellCSSProps))
 
-			rowCell = `<td class="` + tdClass + `">` + rowCell + `</td>`
+			tRow.WriteString(`<td class="` + tdClass + `">` + rowCell + `</td>`)
 		} else {
-			rowCell = `<td>` + rowCell + `</td>`
+			tRow.WriteString(`<td>` + rowCell + `</td>`)
 		}
-
-		tRow += rowCell
 	}
 
 	if len(ht.Table.LineAfter) > 0 {
@@ -412,10 +425,9 @@ func (ht *HTMLTable) getRow(rowIndex int) (string, error) {
 	}
 
 	if trClass != "" {
-		return `<tr class="` + trClass + `">` + tRow + `</tr>`, nil
+		return `<tr class="` + trClass + `">` + tRow.String() + `</tr>`, nil
 	}
-	return `<tr>` + tRow + `</tr>`, nil
-
+	return `<tr>` + tRow.String() + `</tr>`, nil
 }
 
 // getCSSForClassSelector returns css string for a class
