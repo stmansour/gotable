@@ -80,6 +80,7 @@ func (pt *PDFTable) writePDFBuffer(inputFile string) error {
 	htmlExportFile := inputFile + ".html"
 
 	cmdArgs := []string{
+		"--disable-smart-shrinking",
 		// top margin
 		"-T", "15",
 		// header center content
