@@ -4,7 +4,39 @@ import (
 	// "bytes"
 	"os"
 	"testing"
+	"time"
 )
+
+var pdfProps = []*PDFProperty{
+	// disable smart shrinking
+	{Option: "--no-pdf-compression"},
+	// top margin
+	{Option: "-T", Value: "15"},
+	// header center content
+	{Option: "--header-center", Value: "BenchMark Report Table"},
+	// header font size
+	{Option: "--header-font-size", Value: "7"},
+	// header font
+	{Option: "--header-font-name", Value: "opensans"},
+	// header spacing
+	{Option: "--header-spacing", Value: "3"},
+	// bottom margin
+	{Option: "-B", Value: "15"},
+	// footer spacing
+	{Option: "--footer-spacing", Value: "5"},
+	// footer font
+	{Option: "--footer-font-name", Value: "opensans"},
+	// footer font size
+	{Option: "--footer-font-size", Value: "7"},
+	// footer left content
+	{Option: "--footer-left", Value: time.Now().Format(DATETIMEFMT)},
+	// footer right content
+	{Option: "--footer-right", Value: "Page [page] of [toPage]"},
+	// page size
+	{Option: "--page-size", Value: "Letter"},
+	// orientation
+	{Option: "--orientation", Value: "Landscape"},
+}
 
 // returns a table object
 func getTable(rows int) *Table {
@@ -166,7 +198,7 @@ func BenchmarkTablePDF(b *testing.B) {
 				if err != nil {
 					b.Fatalf("Error <%s>: %s", funcname, err.Error())
 				}
-				err = tbl.PDFprintTable(f)
+				err = tbl.PDFprintTable(f, pdfProps)
 				if err != nil {
 					b.Fatalf("Error <%s>: %s", funcname, err.Error())
 				}

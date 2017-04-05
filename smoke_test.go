@@ -568,7 +568,7 @@ func DoPDFOutput(t *testing.T, tbl *Table) {
 		// fmt.Printf("smoke_test: Error creating file: %s\n", err.Error())
 	}
 
-	if err := tbl.PDFprintTable(f); err != nil {
+	if err := tbl.PDFprintTable(f, pdfProps); err != nil {
 		t.Errorf("smoke_test: Error creating PDF output: %s\n", err.Error())
 	}
 	// close file after operation

@@ -24,7 +24,12 @@ type PDFTable struct {
 	buf bytes.Buffer
 }
 
-func (pt *PDFTable) writeTableOutput(w io.Writer) error {
+// PDFProperty struct used to hold wkhtmltopdf pdf properties
+type PDFProperty struct {
+	Option, Value string // Value could be optional
+}
+
+func (pt *PDFTable) writeTableOutput(w io.Writer, pdfProps []*PDFProperty) error {
 
 	// get html output first
 	var temp bytes.Buffer
@@ -65,7 +70,7 @@ func (pt *PDFTable) writeTableOutput(w io.Writer) error {
 	defer os.Remove(tempHTMLFile.Name())
 
 	// return output file path
-	if err = pt.writePDFBuffer(filePath); err != nil {
+	if err = pt.writePDFBuffer(filePath, pdfProps); err != nil {
 		return err
 	}
 
@@ -74,42 +79,40 @@ func (pt *PDFTable) writeTableOutput(w io.Writer) error {
 	return err
 }
 
-func (pt *PDFTable) writePDFBuffer(inputFile string) error {
+func (pt *PDFTable) writePDFBuffer(inputFile string, pdfProps []*PDFProperty) error {
 
-	pdfExportTime := time.Now().Format(DATETIMEFMT)
 	htmlExportFile := inputFile + ".html"
 
-	cmdArgs := []string{
-		"--disable-smart-shrinking",
-		// top margin
-		"-T", "15",
-		// header center content
-		"--header-center", pt.Table.GetTitle(),
-		// header font size
-		"--header-font-size", "7",
-		// header font
-		"--header-font-name", "opensans",
-		// header spacing
-		"--header-spacing", "3",
-		// bottom margin
-		"-B", "15",
-		// footer spacing
-		"--footer-spacing", "5",
-		// footer font
-		"--footer-font-name", "opensans",
-		// footer font size
-		"--footer-font-size", "7",
-		// footer left content
-		"--footer-left", pdfExportTime,
-		// footer right content
-		"--footer-right", "Page [page] of [toPage]",
-		// page size
-		"--page-size", "Letter",
-		// orientation
-		"--orientation", "Landscape",
-		// input, output
-		htmlExportFile, "-",
+	// pdfOpts holds only options which does not require any value
+	pdfOpts := []string{}
+
+	// pdfOptsV holds options which has a value
+	pdfOptsV := []string{}
+
+	for _, prop := range pdfProps {
+		if prop.Option != "" && prop.Value != "" {
+			// option which has value
+			pdfOptsV = append(pdfOptsV, prop.Option)
+			pdfOptsV = append(pdfOptsV, prop.Value)
+		} else if prop.Option != "" && prop.Value == "" {
+			// option which does not require value
+			pdfOpts = append(pdfOpts, prop.Option)
+		}
 	}
+
+	// make cmdArgs list from pdfOpts and pdfOptsV
+	cmdArgs := []string{}
+	// first append option which has no option
+	for _, opt := range pdfOpts {
+		cmdArgs = append(cmdArgs, opt)
+	}
+	// later append option with value
+	for _, optV := range pdfOptsV {
+		cmdArgs = append(cmdArgs, optV)
+	}
+
+	// append input and output finally
+	cmdArgs = append(cmdArgs, []string{htmlExportFile, "-"}...)
 
 	// prepare command
 	wkhtmltopdf := exec.Command(WKHTMLTOPDFCMD, cmdArgs...)
