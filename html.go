@@ -523,7 +523,6 @@ func (ht *HTMLTable) getHTMLTemplate() (*template.Template, error) {
 		if tmpl, err := template.ParseFiles(tmplPath); err != nil {
 			goto tmplexdir2
 		} else {
-			errorLog(funcname, ": ", err.Error())
 			// if no error then return simply
 			return tmpl, err
 		}
@@ -545,7 +544,6 @@ tmplexdir2:
 		if tmpl, err := template.ParseFiles(tmplPath); err != nil {
 			goto tmplconst3
 		} else {
-			errorLog(funcname, ": ", err.Error())
 			// if no error then return simply
 			return tmpl, err
 		}
