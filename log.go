@@ -43,7 +43,7 @@ func SetLogger(w io.Writer, level string) {
 func errorLog(msg ...interface{}) {
 
 	// first verify the condition, if it does not match then simply return
-	if !(gtLog.level > 0) {
+	if !(gtLog.level > 0 && gtLog.logger != nil) {
 		return
 	}
 
@@ -53,8 +53,9 @@ func errorLog(msg ...interface{}) {
 
 // info message in the log
 func infoLog(msg ...interface{}) {
+
 	// first verify the condition, if it does not match then simply return
-	if !(gtLog.level <= infoLevel && gtLog.level > 0) {
+	if !(gtLog.level <= infoLevel && gtLog.level > 0 && gtLog.logger != nil) {
 		return
 	}
 
@@ -66,7 +67,7 @@ func infoLog(msg ...interface{}) {
 func debugLog(msg ...interface{}) {
 
 	// first verify the condition, if it does not match then simply return
-	if !(gtLog.level <= debugLevel && gtLog.level > 0) {
+	if !(gtLog.level <= debugLevel && gtLog.level > 0 && gtLog.logger != nil) {
 		return
 	}
 
