@@ -45,6 +45,7 @@ func (pt *PDFTable) writeTableOutput(w io.Writer, pdfProps []*PDFProperty) error
 	var tout TableExportType = ht
 
 	if err := tout.writeTableOutput(&temp); err != nil {
+		errorLog("Unable to write html output of table to buffer: ", err.Error())
 		return err
 	}
 
@@ -60,6 +61,7 @@ func (pt *PDFTable) writeTableOutput(w io.Writer, pdfProps []*PDFProperty) error
 	// be careful, must append it
 	tempHTMLFile, err := os.Create(filePath + ".html")
 	if err != nil {
+		errorLog("Unable to create temporary html file for wkhtmltopdf stdin: ", err.Error())
 		return err
 	}
 	// write html string to file
@@ -71,6 +73,7 @@ func (pt *PDFTable) writeTableOutput(w io.Writer, pdfProps []*PDFProperty) error
 
 	// return output file path
 	if err = pt.writePDFBuffer(filePath, pdfProps); err != nil {
+		errorLog("writePDFBuffer error : ", err.Error())
 		return err
 	}
 
@@ -113,6 +116,7 @@ func (pt *PDFTable) writePDFBuffer(inputFile string, pdfProps []*PDFProperty) er
 
 	// append input and output finally
 	cmdArgs = append(cmdArgs, []string{htmlExportFile, "-"}...)
+	debugLog("Command line arguments for wkhtmltopdf:\n", cmdArgs, "\n\n")
 
 	// prepare command
 	wkhtmltopdf := exec.Command(WKHTMLTOPDFCMD, cmdArgs...)
@@ -120,29 +124,39 @@ func (pt *PDFTable) writePDFBuffer(inputFile string, pdfProps []*PDFProperty) er
 	// REF: https://github.com/aodin/go-pdf-server/blob/master/pdf_server.go
 
 	// get output pipeline
+	infoLog("wkhtmltopdf exec.Command > Getting Stdout pipe... ")
 	output, err := wkhtmltopdf.StdoutPipe()
 	if err != nil {
+		errorLog("wkhtmltopdf exec.command Stdout Pipe err: ", err.Error())
 		return err
 	}
 
 	// Begin the command
+	infoLog("wkhtmltopdf exec.Command > Starting...")
 	if err = wkhtmltopdf.Start(); err != nil {
+		errorLog("wkhtmltopdf exec.command Start err: ", err.Error())
 		return err
 	}
 
 	// Read the generated PDF from std out
+	infoLog("wkhtmltopdf exec.Command > Reading output...")
 	b, err := ioutil.ReadAll(output)
 	if err != nil {
+		errorLog("wkhtmltopdf ReadAll of output err: ", err.Error())
 		return err
 	}
 
 	// End the command
+	infoLog("wkhtmltopdf exec.Command > Waiting for command to exit...")
 	if err = wkhtmltopdf.Wait(); err != nil {
+		errorLog("wkhtmltopdf exec.Command Wait err: ", err.Error())
 		return err
 	}
 
 	// write output to buffer
 	pt.buf.Write(b)
+	debugLog("Length of buffer for pdf output: ", pt.buf.Len(), " bytes")
+	infoLog("wkhtmltopdf output has been written to buffer")
 
 	return nil
 }

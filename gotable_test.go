@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var pdfProps = []*PDFProperty{
+var bmPdfProps = []*PDFProperty{
 	// disable smart shrinking
 	{Option: "--no-pdf-compression"},
 	// top margin
@@ -198,7 +198,7 @@ func BenchmarkTablePDF(b *testing.B) {
 				if err != nil {
 					b.Fatalf("Error <%s>: %s", funcname, err.Error())
 				}
-				err = tbl.PDFprintTable(f, pdfProps)
+				err = tbl.PDFprintTable(f, bmPdfProps)
 				if err != nil {
 					b.Fatalf("Error <%s>: %s", funcname, err.Error())
 				}
