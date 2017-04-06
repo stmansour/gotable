@@ -784,9 +784,9 @@ func (t *Table) HTMLprintTable(w io.Writer) error {
 }
 
 // PDFprintTable renders the entire table for pdf output
-func (t *Table) PDFprintTable(w io.Writer) error {
+func (t *Table) PDFprintTable(w io.Writer, pdfProps []*PDFProperty) error {
 	var tout = &PDFTable{Table: t}
-	return tout.writeTableOutput(w)
+	return tout.writeTableOutput(w, pdfProps)
 }
 
 // ==========================

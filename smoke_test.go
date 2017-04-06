@@ -13,7 +13,39 @@ import (
 	"time"
 )
 
+var pdfProps = []*PDFProperty{
+	//
+	{Option: "--no-collate"},
+	// top margin
+	{Option: "-T", Value: "15"},
+	// header center content
+	{Option: "--header-center", Value: "Smoke Test Report Table"},
+	// header font size
+	{Option: "--header-font-size", Value: "7"},
+	// header font
+	{Option: "--header-font-name", Value: "opensans"},
+	// header spacing
+	{Option: "--header-spacing", Value: "3"},
+	// bottom margin
+	{Option: "-B", Value: "15"},
+	// footer spacing
+	{Option: "--footer-spacing", Value: "5"},
+	// footer font
+	{Option: "--footer-font-name", Value: "opensans"},
+	// footer font size
+	{Option: "--footer-font-size", Value: "7"},
+	// footer left content
+	{Option: "--footer-left", Value: time.Now().Format(DATETIMEFMT)},
+	// footer right content
+	{Option: "--footer-right", Value: "Page [page] of [toPage]"},
+	// page size
+	{Option: "--page-size", Value: "Letter"},
+	// orientation
+	{Option: "--orientation", Value: "Landscape"},
+}
+
 func TestSmoke(t *testing.T) {
+
 	var tbl Table
 
 	// stringln case
@@ -359,6 +391,15 @@ func TestSmoke(t *testing.T) {
 	cssList = append(cssList, &CSSProperty{Name: "color", Value: "green"})
 	tbl.SetSection3CSS(cssList)
 
+	SetLogger(os.Stdout, "debug")
+
+	// errorneous pdf output, cover the errorneous output
+	wrongProps := []*PDFProperty{{Option: "-fake"}}
+	err = tbl.PDFprintTable(ioutil.Discard, wrongProps)
+	if err == nil {
+		t.Error("smoke_test: expected error while using with fake options for pdf output")
+	}
+
 	// Now hit it hard...
 	DoTextOutput(t, &tbl)
 	DoCSVOutput(t, &tbl)
@@ -568,7 +609,7 @@ func DoPDFOutput(t *testing.T, tbl *Table) {
 		// fmt.Printf("smoke_test: Error creating file: %s\n", err.Error())
 	}
 
-	if err := tbl.PDFprintTable(f); err != nil {
+	if err := tbl.PDFprintTable(f, pdfProps); err != nil {
 		t.Errorf("smoke_test: Error creating PDF output: %s\n", err.Error())
 	}
 	// close file after operation

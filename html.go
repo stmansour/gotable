@@ -61,6 +61,7 @@ func (ht *HTMLTable) writeTableOutput(w io.Writer) error {
 	if ht.fontUnit == "" {
 		ht.fontUnit = "ch"
 	}
+	debugLog("HTML file font unit: ", ht.fontUnit)
 
 	// append title
 	ht.buf.WriteString(ht.formatTitle())
@@ -123,6 +124,7 @@ func (ht *HTMLTable) writeTableOutput(w io.Writer) error {
 
 	// format and store html output in ht buf
 	if err = ht.formatHTML(); err != nil {
+		errorLog("formatHTML err: ", err.Error())
 		return err
 	}
 
@@ -140,6 +142,7 @@ func (ht *HTMLTable) formatHTML() error {
 
 	htmlContext.DefaultCSS, err = ht.getTableCSS()
 	if err != nil {
+		errorLog("While getting table css: ", err.Error())
 		return err
 	}
 	htmlContext.DefaultCSS = `<style>` + htmlContext.DefaultCSS + `</style>`
@@ -149,6 +152,7 @@ func (ht *HTMLTable) formatHTML() error {
 	// get template string
 	tmpl, err := ht.getHTMLTemplate()
 	if err != nil {
+		errorLog("While getting table template: ", err.Error())
 		return err
 	}
 
@@ -157,6 +161,7 @@ func (ht *HTMLTable) formatHTML() error {
 	ht.buf.Reset()
 	err = tmpl.Execute(&ht.buf, htmlContext)
 	if err != nil {
+		errorLog("While template execution: ", err.Error())
 		return err
 	}
 
@@ -165,6 +170,7 @@ func (ht *HTMLTable) formatHTML() error {
 	ht.buf.Reset()
 	// beautify html output, it is nice to have, not necessarY
 	ht.buf.WriteString(gohtml.Format(tmpHTMLString))
+	infoLog("HTML output has been formatted and written to internal buffer. :)")
 
 	return nil
 }
@@ -470,11 +476,14 @@ func (ht *HTMLTable) getCSSForClassSelector(className string, cssList []*CSSProp
 
 // getTableCSS reads default css and return the content of it
 func (ht *HTMLTable) getTableCSS() (string, error) {
+	funcname := "getTableCSS"
+
 	// 1. Get the content from custom css file if it exist
 	cssPath := ht.Table.htmlTemplateCSS
 	if ok, _ := isValidFilePath(cssPath); ok {
 		cssString, err := ioutil.ReadFile(cssPath)
 		if err != nil {
+			errorLog(funcname, ": ", err.Error())
 			return "", err
 		}
 		return string(cssString), nil
@@ -484,12 +493,14 @@ func (ht *HTMLTable) getTableCSS() (string, error) {
 	// in case first trial failed
 	exDirPath, err := osext.ExecutableFolder()
 	if err != nil {
+		errorLog(funcname, ": ", err.Error())
 		return "", err
 	}
 	cssPath = path.Join(exDirPath, "gotable.css")
 	if ok, _ := isValidFilePath(cssPath); ok {
 		cssString, err := ioutil.ReadFile(cssPath)
 		if err != nil {
+			errorLog(funcname, ": ", err.Error())
 			return "", err
 		}
 		return string(cssString), nil
@@ -502,6 +513,7 @@ func (ht *HTMLTable) getTableCSS() (string, error) {
 
 // getHTMLTemplate returns the *Template object, error
 func (ht *HTMLTable) getHTMLTemplate() (*template.Template, error) {
+	funcname := "getHTMLTemplate"
 
 	// 1. Get the content from custom template file if it exist
 	tmplPath := ht.Table.htmlTemplate
@@ -521,6 +533,7 @@ func (ht *HTMLTable) getHTMLTemplate() (*template.Template, error) {
 tmplexdir2:
 	exDirPath, err := osext.ExecutableFolder()
 	if err != nil {
+		errorLog(funcname, ": ", err.Error())
 		return nil, err
 	}
 
@@ -541,6 +554,9 @@ tmplconst3:
 	tmpl, err := template.New("gotable.tmpl").Parse(DTEMPLATE)
 
 	// finally return *Template, Error
+	if err != nil {
+		errorLog(funcname, ": ", err.Error())
+	}
 	return tmpl, err
 }
 
