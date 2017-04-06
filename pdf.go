@@ -48,6 +48,7 @@ func (pt *PDFTable) writeTableOutput(w io.Writer, pdfProps []*PDFProperty) error
 		errorLog("Unable to write html output of table to buffer: ", err.Error())
 		return err
 	}
+	debugLog("HTML output for table has been generated and stored in temp buffer!")
 
 	htmlString := temp.String()
 
@@ -67,24 +68,24 @@ func (pt *PDFTable) writeTableOutput(w io.Writer, pdfProps []*PDFProperty) error
 	// write html string to file
 	tempHTMLFile.WriteString(htmlString)
 	tempHTMLFile.Close()
+	debugLog("Temporary html file (stdin for wkhtmltopdf) absolute path: ", tempHTMLFile.Name())
 
 	// remove this temp file after operation
 	defer os.Remove(tempHTMLFile.Name())
 
 	// return output file path
-	if err = pt.writePDFBuffer(filePath, pdfProps); err != nil {
+	if err = pt.writePDFBuffer(tempHTMLFile.Name(), pdfProps); err != nil {
 		errorLog("writePDFBuffer error : ", err.Error())
 		return err
 	}
 
 	// write output to passed io.Writer interface object
 	w.Write(pt.buf.Bytes())
+	infoLog("pdf output from buffer has been written to io.Writer typed object. :)")
 	return err
 }
 
-func (pt *PDFTable) writePDFBuffer(inputFile string, pdfProps []*PDFProperty) error {
-
-	htmlExportFile := inputFile + ".html"
+func (pt *PDFTable) writePDFBuffer(htmlInputFile string, pdfProps []*PDFProperty) error {
 
 	// pdfOpts holds only options which does not require any value
 	pdfOpts := []string{}
@@ -115,7 +116,7 @@ func (pt *PDFTable) writePDFBuffer(inputFile string, pdfProps []*PDFProperty) er
 	}
 
 	// append input and output finally
-	cmdArgs = append(cmdArgs, []string{htmlExportFile, "-"}...)
+	cmdArgs = append(cmdArgs, []string{htmlInputFile, "-"}...)
 	debugLog("Command line arguments for wkhtmltopdf:\n", cmdArgs, "\n\n")
 
 	// prepare command
@@ -152,11 +153,12 @@ func (pt *PDFTable) writePDFBuffer(inputFile string, pdfProps []*PDFProperty) er
 		errorLog("wkhtmltopdf exec.Command Wait err: ", err.Error())
 		return err
 	}
+	infoLog("wkhtmltopdf exec.Command > pdf has been rendered. :)")
 
 	// write output to buffer
 	pt.buf.Write(b)
 	debugLog("Length of buffer for pdf output: ", pt.buf.Len(), " bytes")
-	infoLog("wkhtmltopdf output has been written to buffer")
+	debugLog("wkhtmltopdf pdf output has been written to internal buffer")
 
 	return nil
 }
