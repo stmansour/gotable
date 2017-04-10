@@ -1,5 +1,5 @@
 #!/bin/bash
-BINDIR=/usr/local/bin
+BINDIR=/usr/bin
 PDFPROG=${BINDIR}/wkhtmltopdf
 GETFILE="/usr/local/accord/bin/getfile.sh"
 
@@ -20,7 +20,7 @@ case "${OSNAME}" in
 	"Linux")
 		${GETFILE} ext-tools/utils/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
 		tar xvf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
-		cp wkhtmltox/bin/* /usr/local/bin/
+		cp wkhtmltox/bin/* /usr/bin/
 		rm -f wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
 		;;
 	*) 	echo "Unsupported operating system:  ${OSNAME}"
