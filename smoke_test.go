@@ -391,7 +391,7 @@ func TestSmoke(t *testing.T) {
 	cssList = append(cssList, &CSSProperty{Name: "color", Value: "green"})
 	tbl.SetSection3CSS(cssList)
 
-	SetLogger(os.Stdout, "debug")
+	SetLogger(ioutil.Discard, "debug")
 
 	// errorneous pdf output, cover the errorneous output
 	wrongProps := []*PDFProperty{{Option: "-fake"}}
