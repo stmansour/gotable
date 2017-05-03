@@ -36,7 +36,6 @@ type HTMLTable struct {
 	*Table
 	styleString bytes.Buffer
 	buf         bytes.Buffer
-	fontUnit    string
 }
 
 // HTMLTemplateContext holds the context for table html template
@@ -45,23 +44,12 @@ type HTMLTemplateContext struct {
 	HeadTitle, DefaultCSS, CustomCSS, TableHTML string
 }
 
-// SetCSSFontUnit sets font unit. e.g., `px`, `ch`,
-func (ht *HTMLTable) SetCSSFontUnit(fontUnit string) {
-	ht.fontUnit = fontUnit
-}
-
 func (ht *HTMLTable) writeTableOutput(w io.Writer) error {
 
 	// vars
 	var (
 		err error
 	)
-
-	// if font unit not set then set default one
-	if ht.fontUnit == "" {
-		ht.fontUnit = "ch"
-	}
-	debugLog("HTML file font unit: ", ht.fontUnit)
 
 	// append title
 	ht.buf.WriteString(ht.formatTitle())
@@ -308,12 +296,12 @@ func (ht *HTMLTable) formatHeaders() (string, error) {
 		}
 
 		// if fontUnit is px then need to convert width in px
-		switch ht.fontUnit {
+		switch ht.Table.fontUnit {
 		case "px":
 			colWidth = colWidth * CSSFONTSIZE
 		}
 		// TODO: put other units conversion switch cases too.....
-		colWidthUnit = strconv.Itoa(colWidth) + ht.fontUnit
+		colWidthUnit = strconv.Itoa(colWidth) + ht.Table.fontUnit
 
 		// set width css property on this header cell, no need to apply on each and every cell of this column
 		ht.Table.SetHeaderCellCSS(headerIndex, []*CSSProperty{{Name: "width", Value: colWidthUnit}})
@@ -537,7 +525,7 @@ tmplexdir2:
 		return nil, err
 	}
 
-	tmplPath = path.Join(exDirPath, "gotable.tmpl")
+	tmplPath = path.Join(exDirPath, "./tmpl/gotable.tmpl")
 	if ok, _ := isValidFilePath(tmplPath); ok {
 
 		// generates new template and parse content from html and returns it
@@ -586,4 +574,34 @@ func (ht *HTMLTable) getCSSPropertyList(element string) ([]*CSSProperty, bool) {
 
 	// return
 	return cellCSSProps, ok
+}
+
+// MultiTableHTMLPrint writes html output from each table to w io.Writer
+func MultiTableHTMLPrint(m []Table, w io.Writer) error {
+	funcname := "MultiTableHTMLPrint"
+
+	for i := 0; i < len(m); i++ {
+
+		// set custom template for reports
+		if i == 0 {
+			// set first table layout template
+			m[i].SetHTMLTemplate("./tmpl/firstTable.tmpl")
+		} else if i == len(m)-1 {
+			// set last table layout template
+			m[i].SetHTMLTemplate("./tmpl/lastTable.tmpl")
+		} else {
+			// set middle table layout template
+			m[i].SetHTMLTemplate("./tmpl/middleTable.tmpl")
+		}
+
+		temp := bytes.Buffer{}
+		err := m[i].HTMLprintTable(&temp)
+		if err != nil {
+			errorLog("%s: Error while getting table output, title: %s, err: %s", funcname, m[i].Title, err.Error())
+			return err
+		}
+		w.Write(temp.Bytes())
+	}
+
+	return nil
 }

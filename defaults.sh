@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DEFAULTSGO="./defaults.go"
-HTMLTEMPLATE="./gotable.tmpl"
+HTMLTEMPLATE="./tmpl/gotable.tmpl"
 DEFAULTCSS="./gotable.css"
 
 # check for html template file existance
