@@ -89,6 +89,7 @@ type Table struct {
 	CSS             map[string]map[string]*CSSProperty //CSS holds css property for title, section1, section2, headers, cells
 	htmlTemplate    string                             // path of custom html template path
 	htmlTemplateCSS string                             // path of custom css for html template
+	fontUnit        string                             // font units in html, e.g, px/ch
 	// errorList       []string                           // stores the list of error in string format
 }
 
@@ -195,6 +196,7 @@ func (t *Table) Init() {
 	t.DateFmt = "01/02/2006"
 	t.DateTimeFmt = "01/02/2006 15:04:00 MST"
 	t.CSS = make(map[string]map[string]*CSSProperty)
+	t.fontUnit = "ch"
 }
 
 // SetHTMLTemplate sets the path of custom html template
@@ -792,6 +794,11 @@ func (t *Table) PDFprintTable(w io.Writer, pdfProps []*PDFProperty) error {
 // ==========================
 // METHODs for HTML output //
 // ==========================
+
+// SetCSSFontUnit sets font unit. e.g., `px`, `ch`,
+func (t *Table) SetCSSFontUnit(fontUnit string) {
+	t.fontUnit = fontUnit
+}
 
 // CSSProperty holds css property to be used as inline css
 type CSSProperty struct {

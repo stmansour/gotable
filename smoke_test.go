@@ -406,6 +406,20 @@ func TestSmoke(t *testing.T) {
 	DoHTMLOutput(t, &tbl)
 	DoPDFOutput(t, &tbl)
 	DoCustomTemplateHTMLOutput(t, &tbl)
+
+	// multiple table test
+	var m []Table
+	for i := 0; i < 10; i++ {
+		var t Table
+		t = tbl
+		t.TightenColumns()
+		m = append(m, t)
+	}
+
+	DoMultiTableTextOutput(t, &m)
+	DoMultiTableCSVOutput(t, &m)
+	DoMultiTableHTMLOutput(t, &m)
+	DoMultiTablePDFOutput(t, &m)
 }
 
 func DoTextOutput(t *testing.T, tbl *Table) {
@@ -648,4 +662,144 @@ func saveTableToFile(t *testing.T, fname string, s string) error {
 	defer f.Close()
 	fmt.Fprintf(f, "%s", s)
 	return err
+}
+
+func DoMultiTableTextOutput(t *testing.T, m *[]Table) {
+
+	fname := "smoke_multi_table_test.txt"
+	f, err := os.Create(fname)
+	if nil != err {
+		t.Errorf("smoke_test: Error creating file %s: %s\n", fname, err.Error())
+		// fmt.Printf("smoke_test: Error creating file: %s\n", err.Error())
+	}
+
+	if err := MultiTableTextPrint(*m, f); err != nil {
+		t.Errorf("smoke_test: Error creating TEXT output: %s\n", err.Error())
+	}
+	// close file after operation
+	f.Close()
+
+	// now compare what we have to the known-good output
+	b, _ := ioutil.ReadFile("./testdata/smoke_multi_table_test.txt")
+	sb, _ := ioutil.ReadFile("./smoke_multi_table_test.txt")
+
+	if len(b) != len(sb) {
+		// fmt.Printf("smoke_test: Expected len = %d,  found len = %d\n", len(b), len(sb))
+		t.Errorf("smoke_test: Expected len = %d,  found len = %d\n", len(b), len(sb))
+	}
+	if len(sb) > 0 && len(b) > 0 {
+		for i := 0; i < len(b); i++ {
+			if i < len(sb) && sb[i] != b[i] {
+				t.Errorf("smoke_test: micompare at character %d, expected %x (%c), found %x (%c)\n", i, b[i], b[i], sb[i], sb[i])
+				// fmt.Printf("smoke_test: micompare at character %d, expected %x (%c), found %x (%c)\n", i, b[i], b[i], sb[i], sb[i])
+				break
+			}
+		}
+	}
+}
+
+func DoMultiTableCSVOutput(t *testing.T, m *[]Table) {
+
+	fname := "smoke_multi_table_test.csv"
+	f, err := os.Create(fname)
+	if nil != err {
+		t.Errorf("smoke_test: Error creating file %s: %s\n", fname, err.Error())
+		// fmt.Printf("smoke_test: Error creating file: %s\n", err.Error())
+	}
+
+	if err := MultiTableCSVPrint(*m, f); err != nil {
+		t.Errorf("smoke_test: Error creating CSV output: %s\n", err.Error())
+	}
+	// close file after operation
+	f.Close()
+
+	// now compare what we have to the known-good output
+	b, _ := ioutil.ReadFile("./testdata/smoke_multi_table_test.csv")
+	sb, _ := ioutil.ReadFile("./smoke_multi_table_test.csv")
+
+	if len(b) != len(sb) {
+		// fmt.Printf("smoke_test: Expected len = %d,  found len = %d\n", len(b), len(sb))
+		t.Errorf("smoke_test: Expected len = %d,  found len = %d\n", len(b), len(sb))
+	}
+	if len(sb) > 0 && len(b) > 0 {
+		for i := 0; i < len(b); i++ {
+			if i < len(sb) && sb[i] != b[i] {
+				t.Errorf("smoke_test: micompare at character %d, expected %x (%c), found %x (%c)\n", i, b[i], b[i], sb[i], sb[i])
+				// fmt.Printf("smoke_test: micompare at character %d, expected %x (%c), found %x (%c)\n", i, b[i], b[i], sb[i], sb[i])
+				break
+			}
+		}
+	}
+}
+
+func DoMultiTableHTMLOutput(t *testing.T, m *[]Table) {
+
+	fname := "smoke_multi_table_test.html"
+	f, err := os.Create(fname)
+	if nil != err {
+		t.Errorf("smoke_test: Error creating file %s: %s\n", fname, err.Error())
+		// fmt.Printf("smoke_test: Error creating file: %s\n", err.Error())
+	}
+
+	if err := MultiTableHTMLPrint(*m, f); err != nil {
+		t.Errorf("smoke_test: Error creating HTML output: %s\n", err.Error())
+	}
+	// close file after operation
+	f.Close()
+
+	// now compare what we have to the known-good output
+	b, _ := ioutil.ReadFile("./testdata/smoke_multi_table_test.html")
+	sb, _ := ioutil.ReadFile("./smoke_multi_table_test.html")
+
+	if len(b) != len(sb) {
+		// fmt.Printf("smoke_test: Expected len = %d,  found len = %d\n", len(b), len(sb))
+		t.Errorf("smoke_test: Expected len = %d,  found len = %d\n", len(b), len(sb))
+	}
+	if len(sb) > 0 && len(b) > 0 {
+		for i := 0; i < len(b); i++ {
+			if i < len(sb) && sb[i] != b[i] {
+				t.Errorf("smoke_test: micompare at character %d, expected %x (%c), found %x (%c)\n", i, b[i], b[i], sb[i], sb[i])
+				// fmt.Printf("smoke_test: micompare at character %d, expected %x (%c), found %x (%c)\n", i, b[i], b[i], sb[i], sb[i])
+				break
+			}
+		}
+	}
+}
+
+func DoMultiTablePDFOutput(t *testing.T, m *[]Table) {
+
+	fname := "smoke_multi_table_test.pdf"
+	f, err := os.Create(fname)
+	if nil != err {
+		t.Errorf("smoke_test: Error creating file %s: %s\n", fname, err.Error())
+		// fmt.Printf("smoke_test: Error creating file: %s\n", err.Error())
+	}
+
+	if err := MultiTablePDFPrint(*m, f, pdfProps); err != nil {
+		t.Errorf("smoke_test: Error creating PDF output: %s\n", err.Error())
+	}
+	// close file after operation
+	f.Close()
+
+	// now compare what we have to the known-good output
+	// b, _ := ioutil.ReadFile("./testdata/smoke_multi_table_test.pdf")
+	sb, _ := ioutil.ReadFile("./smoke_multi_table_test.pdf")
+
+	if len(sb) == 0 {
+		t.Errorf("smoke_test: Expected some content in PDF output file,  found len = 0")
+	}
+
+	// if len(b) != len(sb) {
+	// 	// fmt.Printf("smoke_test: Expected len = %d,  found len = %d\n", len(b), len(sb))
+	// 	t.Errorf("smoke_test: Expected len = %d,  found len = %d\n", len(b), len(sb))
+	// }
+	// if len(sb) > 0 && len(b) > 0 {
+	// 	for i := 0; i < len(b); i++ {
+	// 		if i < len(sb) && sb[i] != b[i] {
+	// 			t.Logf("smoke_test: micompare at character %d, expected %x (%c), found %x (%c)\n", i, b[i], b[i], sb[i], sb[i])
+	// 			// fmt.Printf("smoke_test: micompare at character %d, expected %x (%c), found %x (%c)\n", i, b[i], b[i], sb[i], sb[i])
+	// 			break
+	// 		}
+	// 	}
+	// }
 }

@@ -67,6 +67,7 @@ div.rpt-table-container {
         padding: 0;
         min-width: 90%;
         max-width: 100%;
+        page-break-after: always;
 
         td, th {
             padding: $table-cell-padding;

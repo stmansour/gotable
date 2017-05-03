@@ -1,6 +1,7 @@
 package gotable
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -190,4 +191,22 @@ func (ct *CSVTable) formatRow(row int) ([]string, error) {
 
 	// return
 	return tRow, nil
+}
+
+// MultiTableCSVPrint writes csv output from each table to w io.Writer
+func MultiTableCSVPrint(m []Table, w io.Writer) error {
+	funcname := "MultiTableCSVPrint"
+
+	for i := 0; i < len(m); i++ {
+		temp := bytes.Buffer{}
+		err := m[i].CSVprintTable(&temp)
+		if err != nil {
+			errorLog("%s: Error while getting table output, title: %s, err: %s", funcname, m[i].Title, err.Error())
+			return err
+		}
+		temp.WriteByte('\n')
+		w.Write(temp.Bytes())
+	}
+
+	return nil
 }

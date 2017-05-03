@@ -322,3 +322,21 @@ func (tt *TextTable) sprintLineText() string {
 	s = s[0 : len(s)-tt.TextColSpace]
 	return stringln(s)
 }
+
+// MultiTableTextPrint writes text output from each table to w io.Writer
+func MultiTableTextPrint(m []Table, w io.Writer) error {
+	funcname := "MultiTableTextPrint"
+
+	for i := 0; i < len(m); i++ {
+		temp := bytes.Buffer{}
+		err := m[i].TextprintTable(&temp)
+		if err != nil {
+			errorLog("%s: Error while getting table output, title: %s, err: %s", funcname, m[i].Title, err.Error())
+			return err
+		}
+		temp.WriteByte('\n')
+		w.Write(temp.Bytes())
+	}
+
+	return nil
+}
