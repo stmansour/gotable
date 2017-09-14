@@ -7,6 +7,9 @@ environment:
   GOPATH: c:\go-work
 
 install:
+  # use ruby 2.4, default one is 1.9.3, sass requires >=2.0, <2.5
+  - set PATH=C:\Ruby22\bin;%PATH%
+  - bundle install
   # make installation
   - cinst make -v -y
   # wkhtmltopdf installation
@@ -28,6 +31,11 @@ build_script:
 artifacts:
   - path: buildOutput/gotable
     name: gotable
+
+before_test:
+  - ruby -v
+  - gem -v
+  - bundle -v
 
 test_script:
   - make test
