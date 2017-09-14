@@ -14,9 +14,6 @@ install:
   - set PATH=C:\Ruby%RUBY_VERSION%\bin;%PATH%
   - ruby --version
   - gem --version
-  - gem install bundler --quiet --no-ri --no-rdoc
-  - bundler --version
-  - bundle install
   # make installation
   - cinst make -v -y
   # wkhtmltopdf installation
