@@ -23,7 +23,7 @@ before_install:
   - make
 
 go:
-  - 1.7
+  - 1.9
   - tip
 
 script:

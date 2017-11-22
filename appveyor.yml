@@ -5,8 +5,15 @@ clone_folder: c:\go-work\src\gotable
 
 environment:
   GOPATH: c:\go-work
+  matrix:
+    - RUBY_VERSION: "24"
+    - RUBY_VERSION: "24-x64"
 
 install:
+  # use ruby 2.4, default one is 1.9.3, sass requires >=2.0, <2.5
+  - set PATH=C:\Ruby%RUBY_VERSION%\bin;%PATH%
+  - ruby --version
+  - gem --version
   # make installation
   - cinst make -v -y
   # wkhtmltopdf installation
@@ -28,6 +35,9 @@ build_script:
 artifacts:
   - path: buildOutput/gotable
     name: gotable
+
+before_test:
+  - make clean
 
 test_script:
   - make test
