@@ -15,7 +15,7 @@ import (
 const (
 	WKHTMLTOPDFCMD = "wkhtmltopdf"
 	TEMPSTORE      = "."
-	DATETIMEFMT    = "_2 Jan 2006 3:04 PM IST"
+	DATETIMEFMT    = "_2 Jan 2006 3:04 PM" // Actual Format: _2 Jan 2006 3:04 PM UTC
 )
 
 // PDFTable struct used to prepare table in pdf version
