@@ -19,7 +19,7 @@ install:
   # wkhtmltopdf installation
   - cinst wkhtmltopdf -v -y -d
   # sass installation
-  - gem install sass
+  - npm install -g sass
   - go get -u github.com/golang/lint/golint
   - echo %GOPATH%
   - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%

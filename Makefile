@@ -1,4 +1,4 @@
-SCSS_BIN := scss
+SCSS_BIN := sass
 
 gotable: css defaults *.go
 	go clean
@@ -17,7 +17,7 @@ defaults:
 	./defaults.sh
 
 css:
-	${SCSS_BIN} ./scss/gotable.scss ./gotable.css --precision 5 --style=compressed --sourcemap=none
+	${SCSS_BIN} ./scss/gotable.scss ./gotable.css --precision 5 --style=compressed --no-source-map
 	@echo "Current working directory:"
 	pwd
 	@echo "scss completed.  ls -l ./gotable.css:"
