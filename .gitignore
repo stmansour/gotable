@@ -9,4 +9,5 @@
 *.css.map
 *.out
 *.csv
+*.test
 defaults.go

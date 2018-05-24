@@ -10,7 +10,7 @@ gotable: css defaults *.go
 
 clean:
 	go clean
-	rm -rf *.out *.csv *.html *.txt *.pdf *.css .sass-cache
+	rm -rf *.out *.csv *.html *.txt *.pdf *.css *.test .sass-cache
 	rm -f defaults.go
 
 defaults:
