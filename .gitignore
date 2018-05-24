@@ -1,0 +1,12 @@
+# sass temp files
+.sass-cache
+
+# auto generated
+*.html
+*.pdf
+*.txt
+*.css
+*.css.map
+*.out
+*.csv
+defaults.go
