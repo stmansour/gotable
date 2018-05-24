@@ -1,4 +1,4 @@
-SCSS_BIN := /usr/local/dart-sass/sass
+SCSS_BIN := sass
 
 gotable: css defaults *.go
 	go clean
@@ -10,14 +10,14 @@ gotable: css defaults *.go
 
 clean:
 	go clean
-	rm -rf *.out *.csv *.html *.txt *.pdf *.css* .sass-cache
+	rm -rf *.out *.csv *.html *.txt *.pdf *.css *.test .sass-cache
 	rm -f defaults.go
 
 defaults:
 	./defaults.sh
 
 css:
-	${SCSS_BIN} ./scss/gotable.scss ./gotable.css --style=compressed --no-source-map
+	${SCSS_BIN} --style=compressed --no-source-map ./scss/gotable.scss ./gotable.css
 	@echo "Current working directory:"
 	pwd
 	@echo "scss completed.  ls -l ./gotable.css:"
