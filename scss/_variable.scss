@@ -1,3 +1,5 @@
+@import "decimal";
+
 $font-stack: Helvetica, sans-serif;
 $font-size-base: 14px;
 
@@ -8,4 +10,4 @@ $table-cell-padding: 5px 10px !default;
 $table-cell-box-sizing: content-box !default;
 $table-border-color: #BBB;
 $table-border-width: 1px !default;
-$line-height: 4 / 3 !default;
+$line-height: decimal-floor(4 / 3, 5) !default;
